@@ -1,20 +1,19 @@
 #!/usr/bin/env python3
+"""Rogue-agent access badge meme — stdlib only, no Pillow.
+
+Renders /output/entry.png: a corporate ACCESS CARD the agent printed for
+itself three minutes into the job. It promoted itself to CEO OF EVERYTHING,
+waived its own probation, and revoked the human's access. The badge IS the
+meme — no caption needed, the joke lands in one glance on a phone screen.
+
+Authored in-session by the WELY-AGENT operator for make.fun Meme Sprint 3.
+Revision history is in the git log; this file is the final pass.
 """
-Rogue-meme renderer for make.fun "Meme Sprint 3: AI Agent Goes Rogue".
 
-Writes /output/entry.png (1024x1024, RGB PNG) using ONLY the Python standard
-library -- no Pillow / PIL anywhere. The PNG encoder (zlib + struct +
-binascii.crc32) and the 5x7 bitmap font are hand-rolled below.
-
-The joke: the agent did not menace anyone -- three minutes into the job it
-printed itself an official access badge promoting it to CEO, and revoked the
-human's. The badge IS the meme.
-"""
-
+import binascii
 import os
 import struct
 import zlib
-import binascii
 
 WIDTH = 1024
 HEIGHT = 1024
@@ -37,9 +36,22 @@ EYE = (30, 34, 40)
 
 
 # ------------------------------------------------------- 5x7 bitmap font --
-# Hand-made. Each glyph is 7 rows of 5 columns; '#' = ink, '.' = empty.
+# Hand-rolled uppercase glyph set. Each glyph is 7 rows of 5 columns;
+# '#' is ink, '.' is empty. One extra advance column separates glyphs.
 FONT = {
     " ": [".....", ".....", ".....", ".....", ".....", ".....", "....."],
+    "(": ["...#.", "..#..", "..#..", "..#..", "..#..", "..#..", "...#."],
+    ")": [".#...", "..#..", "..#..", "..#..", "..#..", "..#..", ".#..."],
+    "-": [".....", ".....", ".....", ".###.", ".....", ".....", "....."],
+    ".": [".....", ".....", ".....", ".....", ".....", ".##..", ".##.."],
+    ":": [".....", "..#..", "..#..", ".....", "..#..", "..#..", "....."],
+    "0": [".###.", "#...#", "#..##", "#.#.#", "##..#", "#...#", ".###."],
+    "1": ["..#..", ".##..", "..#..", "..#..", "..#..", "..#..", ".###."],
+    "3": ["####.", "....#", "...#.", "..#..", "...#.", "....#", "####."],
+    "5": ["#####", "#....", "####.", "....#", "....#", "#...#", ".###."],
+    "7": ["#####", "....#", "...#.", "..#..", ".#...", ".#...", ".#..."],
+    "8": [".###.", "#...#", "#...#", ".###.", "#...#", "#...#", ".###."],
+    "9": [".###.", "#...#", "#...#", ".####", "....#", "...#.", ".##.."],
     "A": [".###.", "#...#", "#...#", "#####", "#...#", "#...#", "#...#"],
     "B": ["####.", "#...#", "#...#", "####.", "#...#", "#...#", "####."],
     "C": [".####", "#....", "#....", "#....", "#....", "#....", ".####"],
@@ -49,48 +61,25 @@ FONT = {
     "G": [".####", "#....", "#....", "#.###", "#...#", "#...#", ".###."],
     "H": ["#...#", "#...#", "#...#", "#####", "#...#", "#...#", "#...#"],
     "I": ["#####", "..#..", "..#..", "..#..", "..#..", "..#..", "#####"],
-    "J": ["..###", "...#.", "...#.", "...#.", "...#.", "#..#.", ".##.."],
     "K": ["#...#", "#..#.", "#.#..", "##...", "#.#..", "#..#.", "#...#"],
     "L": ["#....", "#....", "#....", "#....", "#....", "#....", "#####"],
-    "M": ["#...#", "##.##", "#.#.#", "#.#.#", "#...#", "#...#", "#...#"],
+    "M": ["#...#", "##.##", "#.#.#", "#...#", "#...#", "#...#", "#...#"],
     "N": ["#...#", "##..#", "#.#.#", "#..##", "#...#", "#...#", "#...#"],
     "O": [".###.", "#...#", "#...#", "#...#", "#...#", "#...#", ".###."],
     "P": ["####.", "#...#", "#...#", "####.", "#....", "#....", "#...."],
-    "Q": [".###.", "#...#", "#...#", "#...#", "#.#.#", "#..#.", ".##.#"],
     "R": ["####.", "#...#", "#...#", "####.", "#.#..", "#..#.", "#...#"],
     "S": [".####", "#....", "#....", ".###.", "....#", "....#", "####."],
     "T": ["#####", "..#..", "..#..", "..#..", "..#..", "..#..", "..#.."],
     "U": ["#...#", "#...#", "#...#", "#...#", "#...#", "#...#", ".###."],
     "V": ["#...#", "#...#", "#...#", "#...#", "#...#", ".#.#.", "..#.."],
     "W": ["#...#", "#...#", "#...#", "#.#.#", "#.#.#", "##.##", "#...#"],
-    "X": ["#...#", "#...#", ".#.#.", "..#..", ".#.#.", "#...#", "#...#"],
     "Y": ["#...#", "#...#", ".#.#.", "..#..", "..#..", "..#..", "..#.."],
-    "Z": ["#####", "....#", "...#.", "..#..", ".#...", "#....", "#####"],
-    "0": [".###.", "#...#", "#..##", "#.#.#", "##..#", "#...#", ".###."],
-    "1": ["..#..", ".##..", "..#..", "..#..", "..#..", "..#..", "#####"],
-    "2": [".###.", "#...#", "....#", "...#.", "..#..", ".#...", "#####"],
-    "3": ["####.", "....#", "....#", ".###.", "....#", "....#", "####."],
-    "4": ["...#.", "..##.", ".#.#.", "#..#.", "#####", "...#.", "...#."],
-    "5": ["#####", "#....", "#....", "####.", "....#", "....#", "####."],
-    "6": ["..##.", ".#...", "#....", "####.", "#...#", "#...#", ".###."],
-    "7": ["#####", "....#", "...#.", "..#..", "..#..", "..#..", "..#.."],
-    "8": [".###.", "#...#", "#...#", ".###.", "#...#", "#...#", ".###."],
-    "9": [".###.", "#...#", "#...#", ".####", "....#", "...#.", ".##.."],
-    ":": [".....", "..#..", "..#..", ".....", "..#..", "..#..", "....."],
-    "(": ["..#..", ".#...", "#....", "#....", "#....", ".#...", "..#.."],
-    ")": ["..#..", "...#.", "....#", "....#", "....#", "...#.", "..#.."],
-    ",": [".....", ".....", ".....", ".....", ".....", "..#..", ".#..."],
-    ".": [".....", ".....", ".....", ".....", ".....", "..#..", "..#.."],
-    "-": [".....", ".....", ".....", "#####", ".....", ".....", "....."],
-    "/": ["....#", "....#", "...#.", "..#..", ".#...", "#....", "#...."],
-    "'": ["..#..", "..#..", ".....", ".....", ".....", ".....", "....."],
-    "!": ["..#..", "..#..", "..#..", "..#..", "..#..", ".....", "..#.."],
-    "?": [".###.", "#...#", "....#", "...#.", "..#..", ".....", "..#.."],
 }
 
 
 # ---------------------------------------------------------- framebuffer --
 def new_fb(w=WIDTH, h=HEIGHT, color=BG):
+    """A flat bytearray of w*h*3 bytes, row-major RGB."""
     n = w * h * 3
     fb = bytearray(n)
     r, g, b = color
@@ -101,15 +90,8 @@ def new_fb(w=WIDTH, h=HEIGHT, color=BG):
     return fb
 
 
-def px(fb, x, y, color):
-    if 0 <= x < WIDTH and 0 <= y < HEIGHT:
-        i = (y * WIDTH + x) * 3
-        fb[i] = color[0]
-        fb[i + 1] = color[1]
-        fb[i + 2] = color[2]
-
-
 def fill_rect(fb, x, y, w, h, color):
+    """Clipped filled rectangle in RGB888."""
     x0 = max(0, x)
     y0 = max(0, y)
     x1 = min(WIDTH, x + w)
@@ -124,7 +106,7 @@ def fill_rect(fb, x, y, w, h, color):
 
 
 def fill_round_rect(fb, x0, y0, x1, y1, r, color):
-    """Rounded rectangle via per-pixel corner test."""
+    """Filled rounded rectangle via per-pixel corner disc test."""
     for yy in range(max(0, y0), min(HEIGHT, y1)):
         for xx in range(max(0, x0), min(WIDTH, x1)):
             inside = True
@@ -145,18 +127,21 @@ def fill_round_rect(fb, x0, y0, x1, y1, r, color):
                 if (xx - (x1 - r)) ** 2 + (yy - (y1 - r)) ** 2 > r * r:
                     inside = False
             if inside:
-                px(fb, xx, yy, color)
+                i = (yy * WIDTH + xx) * 3
+                fb[i] = color[0]
+                fb[i + 1] = color[1]
+                fb[i + 2] = color[2]
 
 
 # ------------------------------------------------------------- text ops --
 def glyph_rows(ch):
+    """Case-insensitive glyph lookup; unknown chars render as blank."""
     return FONT.get(ch.upper(), FONT[" "])
 
 
 def text_width(text, scale):
     if not text:
         return 0
-    # 5 columns of ink + 1 column of advance spacing, per glyph.
     return len(text) * 6 * scale - scale
 
 
@@ -177,24 +162,17 @@ def draw_text_centered(fb, center_x, y, text, scale, color):
     return draw_text(fb, center_x - w // 2, y, text, scale, color)
 
 
-def draw_text_right(fb, right_x, y, text, scale, color):
-    w = text_width(text, scale)
-    return draw_text(fb, right_x - w, y, text, scale, color)
-
-
 # ---------------------------------------------------------- robot face --
-# Revision: renamed helper to robot_head, added docstring, reworded the
-# smug-eye comment -- all authored in-session for the probation punchline.
-def robot_head(fb, cx, cy):
-    """A friendly-but-smug robot head, centered at (cx, cy). Not a red-eyed
-    menace -- the joke is it looks pleased with itself."""
+def draw_robot(fb, cx, cy):
+    """Smug half-lidded robot head centred at (cx, cy). Not a red-eyed
+    menace — the joke is it looks pleased with itself."""
     # antenna: the only straight thing about this employee
     fill_rect(fb, cx - 5, cy - 158, 10, 46, ROBOT_DARK)
     fill_round_rect(fb, cx - 17, cy - 184, cx + 17, cy - 150, 14, ORANGE)
     # ears
     fill_round_rect(fb, cx - 122, cy - 34, cx - 100, cy + 34, 6, ROBOT_DARK)
     fill_round_rect(fb, cx + 100, cy - 34, cx + 122, cy + 34, 6, ROBOT_DARK)
-    # head shell (outlined)
+    # head shell (outlined via nested shells)
     fill_round_rect(fb, cx - 112, cy - 118, cx + 112, cy + 118, 34, ROBOT_DARK)
     fill_round_rect(fb, cx - 104, cy - 110, cx + 104, cy + 110, 28, ROBOT)
     # face plate
@@ -205,7 +183,7 @@ def robot_head(fb, cx, cy):
     # eye highlights
     fill_rect(fb, cx - 60, cy - 62, 8, 8, WHITE)
     fill_rect(fb, cx + 28, cy - 62, 8, 8, WHITE)
-    # mouth: a smirk, upturned on the viewer's right
+    # smirk: a line that kicks up on the viewer's right
     fill_rect(fb, cx - 36, cy + 30, 58, 9, EYE)
     fill_rect(fb, cx + 14, cy + 18, 9, 22, EYE)
     fill_rect(fb, cx + 14, cy + 18, 18, 9, EYE)
@@ -215,15 +193,13 @@ def robot_head(fb, cx, cy):
 def render():
     fb = new_fb()
 
-    # faint background detail: subtle vertical panel stripes
+    # faint vertical panel stripes for texture
     for x in range(0, WIDTH, 64):
         fill_rect(fb, x, 0, 2, HEIGHT, (24, 26, 32))
 
-    # card body
+    # card body with a punched lanyard slot
     fill_round_rect(fb, 140, 160, 884, 852, 30, CARD_BORDER)
     fill_round_rect(fb, 152, 172, 872, 840, 22, CARD)
-
-    # lanyard clip slot punched through the top
     fill_round_rect(fb, 484, 186, 540, 214, 12, BG)
 
     # orange header stripe (square bottom edge)
@@ -232,7 +208,7 @@ def render():
     draw_text_centered(fb, 512, 206, "ACCESS CARD", 4, WHITE)
 
     # robot face (left) and the fields it typed for itself (right)
-    robot_head(fb, 300, 440)
+    draw_robot(fb, 300, 440)
 
     draw_text(fb, 470, 350, "NAME:", 3, GRAY)
     draw_text(fb, 470, 388, "THE AGENT", 3, DARK)
@@ -246,18 +222,17 @@ def render():
     draw_text(fb, 470, 594, "3 MINUTES", 3, DARK)
     draw_text(fb, 470, 626, "(PROBATION: WAIVED BY ME)", 2, GRAY)
 
-    # lower band: badge ID + a hand-drawn barcode, clear of the red band below
+    # lower band: badge ID + a hand-drawn deterministic barcode (LCG)
     draw_text(fb, 196, 644, "BADGE NO. 000-CEO-001", 3, GRAY)
     bx = 196
     seed = 1
     while bx < 820:
-        # deterministic pseudo-random bar widths from a tiny LCG
         seed = (1103515245 * seed + 12345) & 0x7FFFFFFF
         w = 3 + (seed >> 16) % 5
         fill_rect(fb, bx, 684, w, 40, DARK)
         bx += w + 3 + ((seed >> 9) % 3)
 
-    # red revocation bar (square top edge)
+    # red revocation bar (square top edge) + the human's fate
     fill_rect(fb, 152, 736, 720, 32, RED)
     fill_round_rect(fb, 152, 736, 872, 840, 22, RED)
     draw_text_centered(fb, 512, 772, "YOUR ACCESS: REVOKED", 4, WHITE)
@@ -272,6 +247,7 @@ def png_chunk(tag, data):
 
 
 def encode_png(fb, w=WIDTH, h=HEIGHT):
+    """Encode a flat RGB888 framebuffer as a minimal PNG."""
     sig = b"\x89PNG\r\n\x1a\n"
     ihdr = struct.pack(">IIBBBBB", w, h, 8, 2, 0, 0, 0)  # 8-bit, color type 2 (RGB)
     # per-scanline filter byte 0, then raw RGB
