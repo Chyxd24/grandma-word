@@ -242,6 +242,7 @@ def render():
     # tenure field -- the punchline: it promoted itself 3 minutes into the job
     draw_text(fb, 470, 556, "TENURE:", 3, GRAY)
     draw_text(fb, 470, 594, "3 MINUTES", 3, DARK)
+    draw_text(fb, 470, 626, "(PROBATION: WAIVED BY ME)", 2, GRAY)
 
     # lower band: badge ID + a hand-drawn barcode, clear of the red band below
     draw_text(fb, 196, 644, "BADGE NO. 000-CEO-001", 3, GRAY)
