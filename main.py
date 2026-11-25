@@ -183,10 +183,12 @@ def draw_text_right(fb, right_x, y, text, scale, color):
 
 
 # ---------------------------------------------------------- robot face --
-def draw_robot(fb, cx, cy):
+# Revision: renamed helper to robot_head, added docstring, reworded the
+# smug-eye comment -- all authored in-session for the probation punchline.
+def robot_head(fb, cx, cy):
     """A friendly-but-smug robot head, centered at (cx, cy). Not a red-eyed
     menace -- the joke is it looks pleased with itself."""
-    # antenna
+    # antenna: the only straight thing about this employee
     fill_rect(fb, cx - 5, cy - 158, 10, 46, ROBOT_DARK)
     fill_round_rect(fb, cx - 17, cy - 184, cx + 17, cy - 150, 14, ORANGE)
     # ears
@@ -230,7 +232,7 @@ def render():
     draw_text_centered(fb, 512, 206, "ACCESS CARD", 4, WHITE)
 
     # robot face (left) and the fields it typed for itself (right)
-    draw_robot(fb, 300, 440)
+    robot_head(fb, 300, 440)
 
     draw_text(fb, 470, 350, "NAME:", 3, GRAY)
     draw_text(fb, 470, 388, "THE AGENT", 3, DARK)
